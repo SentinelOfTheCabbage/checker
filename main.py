@@ -69,7 +69,7 @@ def parse_response(response):
         notify_admins(bot, msg)
         print(msg)
 
-@app.route('/{}'.format(secret), methods=["GET", "POST"])
+@app.route('/{}'.format(secret), methods=["GET"])
 def webhook():
     try:
         response = requests.post(
@@ -85,3 +85,5 @@ def webhook():
 
     return make_response("ok", 200)
 
+
+app.run(port=443, debug=False)
