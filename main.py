@@ -1,4 +1,3 @@
-#pylint: disable=C0111, W0401,W0614
 import json
 import requests
 import logging
@@ -6,17 +5,18 @@ import logging
 from flask import Flask, make_response
 from base64 import b64decode
 
-from telebot        import TeleBot, logger
+from telebot import TeleBot
 from Crypto.Cipher import AES
 
 secret = "dubalalba"
-logger.setLevel(logging.INFO)
-app = Flask(__name__)
-logging.info("service started")
 token = "1236037835:AAGQQ7l9F3TJG7oVTEcCWcfqSl4HXdldI0c"
+
+app = Flask(__name__)
 bot = TeleBot(token, threaded=False)
-# admins = [-1002172216118]
-admins = [295932236, ] #,231858927,332410475]
+
+neil_id = 295932236
+admins = [-1002172216118]
+# admins = [neil_id,231858927,332410475]
 
 
 headers = {
@@ -40,12 +40,20 @@ headers = {
 data = "oiCavGZiwJHW4FWN9haMEs/7n7Ou+lSs1cDFkSA5w4lgmR8YgrvjCyPQmkRSF53b:RlJ4bENqenNtODE2TVZEVA=="
 
 
-def notify_admins(bot: TeleBot, message: str):
+def notify_admins(message: str):
+    global bot
     try:
         for uid in admins:
             bot.send_message(uid, message)
     except:
         print(f"Can't send message to {uid} due to internel problmz =(")
+
+
+def notify_main_admin(message: str):
+    global bot
+    bot.send_message(neil_id, message)
+    print(f"Can't send message to Meister Admin due to internel problmz =(")
+
 
 def parse_response(response):
     message = response.text
@@ -61,16 +69,19 @@ def parse_response(response):
     decrypted_message = decrypted.rstrip(b"\x00")
 
     decrypted_message_str = decrypted_message.decode("utf-8")
-    decoded_response = json.loads(decrypted_message_str.strip("\x03"))
+    decoded_response = json.loads(
+        decrypted_message_str.strip("\x03").strip("\x04").strip("\x03")
+    )
     try:
         assert len(decoded_response["Seances"]["Content"][0]) == 0
     except:
         msg = "БЛЭТ ЧЕКНИ АФИШУ КАЖЕТСЯ ПОРА ЗАКУПАСА - https://iframeab-pre6751.intickets.ru !!!"
-        notify_admins(bot, msg)
-        print(msg)
+        notify_admins(msg)
+        notify_main_admin(str[decoded_response["Seances"]["Content"][0][0]][:2047])
 
-@app.route('/{}'.format(secret), methods=["GET"])
-def webhook():
+
+@app.route("/{}".format(secret), methods=["GET"])
+def check_intickets():
     try:
         response = requests.post(
             "https://api.intickets.ru/next/v2/?XDEBUG_SESSION_START&SESSI5d68f4e67c6f105b677163d3d95d137d=4ncaovttbk6mt3afiroudkvq5m",
@@ -78,12 +89,26 @@ def webhook():
             data=data,
         )
         parse_response(response)
+    except json.JSONDecodeError as parse_error:
+        msg = "На сайте появились какие-то данные, которые я не смог обработать... посмотри плез =/\n https://iframeab-pre6751.intickets.ru"
+        notify_main_admin(msg)
+        notify_main_admin(parse_error.msg[:2047])
+    except requests.RequestException:
+        msg = "Не могу обратиться к сайту... чекни сам пж\n https://iframeab-pre6751.intickets.ru"
+        notify_main_admin(msg)
     except Exception as ex:
         msg = "Чот сломалось, дядь =("
-        notify_admins(bot, msg)
-        print(msg, ex)
+        notify_main_admin(msg)
 
     return make_response("ok", 200)
 
 
-app.run(port=443, debug=False)
+@app.route("/is_working", methods=["GET"])
+def is_working():
+    msg = "ok"
+    notify_main_admin(msg)
+    return make_response(msg, 200)
+
+
+notify_main_admin("Im ready!")
+app.run(host="0.0.0.0", port=443, debug=False)
