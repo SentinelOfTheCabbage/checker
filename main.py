@@ -1,6 +1,7 @@
 import json
 import requests
 import logging
+import traceback
 
 from flask import Flask, make_response
 from base64 import b64decode
@@ -15,8 +16,8 @@ app = Flask(__name__)
 bot = TeleBot(token, threaded=False)
 
 neil_id = 295932236
-admins = [-1002172216118]
-# admins = [neil_id,231858927,332410475]
+# admins = [-1002172216118]
+admins = [neil_id, 387561850, -1002172216118]
 
 
 headers = {
@@ -44,7 +45,12 @@ def notify_admins(message: str):
     global bot
     try:
         for uid in admins:
-            bot.send_message(uid, message)
+            if len(message) < 2049:
+                bot.send_message(uid, message)
+            else:
+                parts = [message[i:i+2048]  for i in range(0, len(message), 2048)]
+                for part in parts:
+                    bot.send_message(uid, part)
     except:
         print(f"Can't send message to {uid} due to internel problmz =(")
 
@@ -77,7 +83,7 @@ def parse_response(response):
     except:
         msg = "БЛЭТ ЧЕКНИ АФИШУ КАЖЕТСЯ ПОРА ЗАКУПАСА - https://iframeab-pre6751.intickets.ru !!!"
         notify_admins(msg)
-        notify_main_admin(str[decoded_response["Seances"]["Content"][0][0]][:2047])
+        notify_main_admin(str[decoded_response["Seances"]["Content"][0][0]])
 
 
 @app.route("/{}".format(secret), methods=["GET"])
@@ -92,11 +98,11 @@ def check_intickets():
     except json.JSONDecodeError as parse_error:
         msg = "На сайте появились какие-то данные, которые я не смог обработать... посмотри плез =/\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
-        notify_main_admin(parse_error.msg[:2047])
+        notify_main_admin(traceback.format_stack())
     except requests.RequestException:
         msg = "Не могу обратиться к сайту... чекни сам пж\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
-    except Exception as ex:
+    except Exception:
         msg = "Чот сломалось, дядь =("
         notify_main_admin(msg)
 
