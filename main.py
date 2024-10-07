@@ -19,7 +19,7 @@ neil_id = 295932236
 polinas_id = 387561850
 chat_id = -1002172216118
 valyas_id = 706265979
-admins = [neil_id, polinas_id, valyas_id]
+admins = [neil_id,] #, polinas_id, valyas_id]
 
 
 headers = {
@@ -69,7 +69,7 @@ def parse_response(response):
 
     text = b64decode(splitted_msg[0])
     iv = b64decode(splitted_msg[1])
-    key = "6f8b30a279b55406".encode("utf-8")
+    key = "e7ad5c48c65c27db".encode("utf-8")
 
     cipher = AES.new(key, AES.MODE_CBC, iv)
     decrypted = cipher.decrypt(text)
@@ -104,9 +104,10 @@ def check_intickets():
     except requests.RequestException:
         msg = "Не могу обратиться к сайту... чекни сам пж\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
-    except Exception:
+    except Exception as e:
         msg = "Чот сломалось, дядь =("
         notify_main_admin(msg)
+        print(e)
 
     return make_response("ok", 200)
 
