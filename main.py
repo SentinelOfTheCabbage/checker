@@ -16,8 +16,10 @@ app = Flask(__name__)
 bot = TeleBot(token, threaded=False)
 
 neil_id = 295932236
-# admins = [-1002172216118]
-admins = [neil_id, 387561850, -1002172216118]
+polinas_id = 387561850
+chat_id = -1002172216118
+valyas_id = 706265979
+admins = [neil_id, polinas_id, valyas_id]
 
 
 headers = {
