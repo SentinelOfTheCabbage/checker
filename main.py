@@ -19,7 +19,9 @@ neil_id = 295932236
 polinas_id = 387561850
 chat_id = -1002172216118
 valyas_id = 706265979
-admins = [neil_id,] #, polinas_id, valyas_id]
+admins = [
+    neil_id,
+]  # , polinas_id, valyas_id]
 
 
 headers = {
@@ -36,7 +38,7 @@ headers = {
     "sec-fetch-mode": "cors",
     "sec-fetch-site": "same-site",
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 YaBrowser/24.7.0.0 Safari/537.36",
-    "x-client-version": "4.3.74",
+    'x-client-version': '4.3.97',
     "x-frame-origin": "iframeab-pre6751.intickets.ru",
 }
 
@@ -50,7 +52,7 @@ def notify_admins(message: str):
             if len(message) < 2049:
                 bot.send_message(uid, message)
             else:
-                parts = [message[i:i+2048]  for i in range(0, len(message), 2048)]
+                parts = [message[i : i + 2048] for i in range(0, len(message), 2048)]
                 for part in parts:
                     bot.send_message(uid, part)
     except:
@@ -86,6 +88,7 @@ def parse_response(response):
         msg = "БЛЭТ ЧЕКНИ АФИШУ КАЖЕТСЯ ПОРА ЗАКУПАСА - https://iframeab-pre6751.intickets.ru !!!"
         notify_admins(msg)
         notify_main_admin(str[decoded_response["Seances"]["Content"][0][0]])
+    return decoded_response
 
 
 @app.route("/{}".format(secret), methods=["GET"])
@@ -97,16 +100,17 @@ def check_intickets():
             data=data,
         )
         content = parse_response(response)
-        notify_main_admin(content[:4096])
+        notify_main_admin(content)
     except json.JSONDecodeError as parse_error:
         msg = "На сайте появились какие-то данные, которые я не смог обработать... посмотри плез =/\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
-        notify_main_admin(traceback.format_stack())
-    except requests.RequestException:
+        notify_main_admin(parse_error)
+    except requests.RequestException as request_exception:
         msg = "Не могу обратиться к сайту... чекни сам пж\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
-    except Exception as e:
-        print(e)
+        notify_main_admin(request_exception)
+    except Exception as exception:
+        notify_main_admin(exception)
 
     return make_response("ok", 200)
 
