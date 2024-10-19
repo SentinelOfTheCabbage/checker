@@ -4,10 +4,11 @@ import logging
 import traceback
 
 from flask import Flask, make_response
-from base64 import b64decode
+from base64 import b64decode, b64encode
 
 from telebot import TeleBot
 from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
 
 secret = "dubalalba"
 token = "1236037835:AAGQQ7l9F3TJG7oVTEcCWcfqSl4HXdldI0c"
@@ -42,7 +43,7 @@ headers = {
     "x-frame-origin": "iframeab-pre6751.intickets.ru",
 }
 
-data = "oiCavGZiwJHW4FWN9haMEs/7n7Ou+lSs1cDFkSA5w4lgmR8YgrvjCyPQmkRSF53b:RlJ4bENqenNtODE2TVZEVA=="
+data = 'Nkf7/ED1KdfAy5RGPHoEJmUAyPbizpywhEfAEwVLyeh5SiMtoRZfDyrrmdZWlZJE:QmhBbERvMHBhS1E4M0p0cQ=='
 
 
 def notify_admins(message: str):
@@ -81,6 +82,7 @@ def parse_response(response):
     decrypted_message_str = decrypted_message.decode("utf-8")
     back = decrypted_message_str[-1]
     decoded_response = json.loads(decrypted_message_str.strip(back))
+    print(decoded_response)
 
     try:
         assert len(decoded_response["Seances"]["Content"][0]) == 0
@@ -90,6 +92,24 @@ def parse_response(response):
         notify_main_admin(str[decoded_response["Seances"]["Content"][0][0]])
     return decoded_response
 
+def generate_message(response):
+    response_str = json.dumps(response)
+
+    key = "87851f3bbdc755bf".encode("utf-8")
+    iv = get_random_bytes(16)
+
+    pad_len = AES.block_size - (len(response_str) % AES.block_size)
+    pad_char = chr(pad_len)
+    padded_response = response_str + pad_char * pad_len
+
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    encrypted_text = cipher.encrypt(padded_response.encode('utf-8'))
+
+    encoded_encrypted_text = b64encode(encrypted_text).decode('utf-8')
+    encoded_iv = b64encode(iv).decode('utf-8')
+    encrypted_message = f"{encoded_encrypted_text}:{encoded_iv}"
+
+    return encrypted_message
 
 @app.route("/{}".format(secret), methods=["GET"])
 def check_intickets():
@@ -99,8 +119,7 @@ def check_intickets():
             headers=headers,
             data=data,
         )
-        content = parse_response(response)
-        notify_main_admin(content)
+        parse_response(response)
     except json.JSONDecodeError as parse_error:
         msg = "На сайте появились какие-то данные, которые я не смог обработать... посмотри плез =/\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
