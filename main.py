@@ -105,8 +105,6 @@ def check_intickets():
         msg = "Не могу обратиться к сайту... чекни сам пж\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
     except Exception as e:
-        msg = "Чот сломалось, дядь =("
-        notify_main_admin(msg)
         print(e)
 
     return make_response("ok", 200)
