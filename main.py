@@ -69,7 +69,7 @@ def parse_response(response):
 
     text = b64decode(splitted_msg[0])
     iv = b64decode(splitted_msg[1])
-    key = "e7ad5c48c65c27db".encode("utf-8")
+    key = "87851f3bbdc755bf".encode("utf-8")
 
     cipher = AES.new(key, AES.MODE_CBC, iv)
     decrypted = cipher.decrypt(text)
@@ -77,9 +77,9 @@ def parse_response(response):
     decrypted_message = decrypted.rstrip(b"\x00")
 
     decrypted_message_str = decrypted_message.decode("utf-8")
-    decoded_response = json.loads(
-        decrypted_message_str.strip("\x03").strip("\x04").strip("\x03")
-    )
+    back = decrypted_message_str[-1]
+    decoded_response = json.loads(decrypted_message_str.strip(back))
+
     try:
         assert len(decoded_response["Seances"]["Content"][0]) == 0
     except:
@@ -96,7 +96,8 @@ def check_intickets():
             headers=headers,
             data=data,
         )
-        parse_response(response)
+        content = parse_response(response)
+        notify_main_admin(content[:4096])
     except json.JSONDecodeError as parse_error:
         msg = "На сайте появились какие-то данные, которые я не смог обработать... посмотри плез =/\n https://iframeab-pre6751.intickets.ru"
         notify_main_admin(msg)
