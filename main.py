@@ -56,7 +56,7 @@ def notify_admins(message: str):
                 parts = [message[i : i + 2048] for i in range(0, len(message), 2048)]
                 for part in parts:
                     bot.send_message(uid, part)
-    except:
+    except Exception as ex:
         print(f"Can't send message to {uid} due to internel problmz =(")
 
 
@@ -89,7 +89,7 @@ def parse_response(response):
     except:
         msg = "БЛЭТ ЧЕКНИ АФИШУ КАЖЕТСЯ ПОРА ЗАКУПАСА - https://iframeab-pre6751.intickets.ru !!!"
         notify_admins(msg)
-        notify_main_admin(str[decoded_response["Seances"]["Content"][0][0]])
+        notify_main_admin(str(decoded_response["Seances"]["Content"]))
     return decoded_response
 
 def generate_message(response):
